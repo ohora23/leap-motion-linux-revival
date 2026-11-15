@@ -68,6 +68,10 @@ to SIM IP. Practical fallout:
   - Community fork using libuvc: https://github.com/wtfuzz/leapuvc
 - **OpenLeap** — open driver reverse-engineering project (hardware background:
   Cypress EZ-USB FX3 + 2 IR sensors): https://github.com/openleap/OpenLeap
+- **leap-jetson** — 3D hand tracking on the raw UVC stream, without the
+  Ultraleap service: Monado's Mercury hand models in TensorRT FP16 on an
+  NVIDIA Jetson (aarch64), about 80 fps on an AGX Xavier; also runs on a
+  desktop CPU with ONNX Runtime: https://github.com/OomAngel/leap-jetson
 
 ## 4. Project ideas with existing code to build from
 
