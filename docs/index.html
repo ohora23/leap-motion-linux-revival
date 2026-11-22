@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Leap Motion Linux Revival Kit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Restore the original Leap Motion Controller on modern Linux after Ultraleap shut down: archived packages, a udev fix and a live visualizer.">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #f6f7f9;
+    --text: #1a1d21;
+    --text-dim: #565c66;
+    --border: #e3e6ea;
+    --accent: #2563eb;
+    --accent-bg: #eef3ff;
+    --good: #0f9960;
+    --bad: #d1453d;
+    --code-bg: #f1f3f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --bg-alt: #1b1e24;
+      --text: #e7e9ec;
+      --text-dim: #9aa1ab;
+      --border: #2a2e35;
+      --accent: #5b9dff;
+      --accent-bg: #1b2a45;
+      --good: #33c481;
+      --bad: #ff6f68;
+      --code-bg: #1f232a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a; --bg-alt: #1b1e24; --text: #e7e9ec; --text-dim: #9aa1ab;
+    --border: #2a2e35; --accent: #5b9dff; --accent-bg: #1b2a45; --good: #33c481;
+    --bad: #ff6f68; --code-bg: #1f232a;
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff; --bg-alt: #f6f7f9; --text: #1a1d21; --text-dim: #565c66;
+    --border: #e3e6ea; --accent: #2563eb; --accent-bg: #eef3ff; --good: #0f9960;
+    --bad: #d1453d; --code-bg: #f1f3f5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+  header.hero {
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 0 40px;
+    text-align: center;
+  }
+  h1 { font-size: 1.9rem; margin: 0 0 10px; letter-spacing: -0.01em; }
+  .subtitle { color: var(--text-dim); font-size: 1.05rem; margin: 0 0 22px; }
+  .badge {
+    display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+    text-transform: uppercase; color: var(--accent); background: var(--accent-bg);
+    border-radius: 100px; padding: 4px 12px; margin-bottom: 18px;
+  }
+  .links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .links a {
+    color: var(--text); text-decoration: none; border: 1px solid var(--border);
+    padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; background: var(--bg);
+  }
+  .links a:hover { border-color: var(--accent); color: var(--accent); }
+  main { padding: 48px 0 20px; }
+  section { margin-bottom: 56px; }
+  h2 {
+    font-size: 1.3rem; margin: 0 0 6px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  h2 .num { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 8px; }
+  p { color: var(--text); }
+  .dim { color: var(--text-dim); }
+  figure { margin: 20px 0; text-align: center; }
+  figure img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+  figcaption { color: var(--text-dim); font-size: 0.85rem; margin-top: 10px; }
+  .two-col {
+    display: grid; grid-template-columns: 1fr; gap: 24px; align-items: center;
+  }
+  @media (min-width: 640px) { .two-col { grid-template-columns: 1fr 1fr; } }
+  .card {
+    background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 1rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 18px 0; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-dim); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  td.num { font-variant-numeric: tabular-nums; }
+  .up { color: var(--good); font-weight: 600; }
+  .down { color: var(--bad); font-weight: 600; }
+  code, pre {
+    background: var(--code-bg); border-radius: 6px; font-size: 0.85em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  code { padding: 1px 6px; }
+  pre { padding: 14px 16px; overflow-x: auto; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  footer {
+    border-top: 1px solid var(--border); padding: 28px 0 48px;
+    color: var(--text-dim); font-size: 0.85rem; text-align: center;
+  }
+  footer a { color: var(--accent); }
+  .hero-img { max-width: 100%; border-radius: 10px; margin-top: 28px; border: 1px solid var(--border); }
+  .grid3 { display:grid; grid-template-columns:1fr; gap:14px; }
+  @media (min-width: 640px) { .grid3 { grid-template-columns:1fr 1fr 1fr; } }
+  .stat { font-size:1.5rem; font-weight:700; color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge">Linux · Ubuntu 24.04 · MIT</div>
+    <h1>Leap Motion Linux Revival Kit</h1>
+    <p class="subtitle">Get the original Leap Motion Controller working on modern Linux<br>after Ultraleap's shutdown</p>
+    <div class="links">
+      <a href="https://github.com/ohora23/leap-motion-linux-revival">Code</a>
+      <a href="https://github.com/ohora23/leap-motion-linux-revival/blob/master/docs/RESOURCES.md">Resource guide</a>
+      <a href="https://github.com/ohora23/leap-motion-linux-revival/blob/master/docs/SDK_CAPABILITIES.md">SDK capabilities</a>
+    </div>
+    <img class="hero-img" src="demo.gif" alt="Live two-hand skeleton tracking: raw IR feed next to palm and finger-bone skeleton">
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <h2><span class="num">01</span>Why this exists</h2>
+    <p>Ultraleap, the company behind Leap Motion, was dismantled and sold off in 2025. Most of the infrastructure that
+    made the original controller (USB <code>f182:0003</code>) work on Linux is now dead or broken:</p>
+    <ul>
+      <li>The official APT repository, <code>repo.ultraleap.com</code>, no longer resolves.</li>
+      <li>The developer and support sites are gone, and the rebranded portal's sign-up flow was broken when tested (July 2026).</li>
+      <li>Even after installing, the vendor's own udev rule is malformed and silently denies USB access.</li>
+    </ul>
+    <p>This kit restores the device on a modern Linux machine using an archived (Wayback Machine) snapshot of the
+    dead repository: no account, no sign-up, and nothing proprietary redistributed.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span>What's in the kit</h2>
+    <table>
+      <thead><tr><th>Piece</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>install.sh</code></td><td>Fetches the Gemini 5.17.1.0 packages from the Wayback Machine, installs them and applies the udev fix</td></tr>
+        <tr><td><code>udev/99-leapmotion-fix.rules</code></td><td>Override that corrects the broken vendor rule</td></tr>
+        <tr><td><code>examples/live_visualizer.py</code></td><td>Raw IR feed and hand skeleton side by side with pinch/grab overlay; replaces the official Control Panel, which fails to launch</td></tr>
+        <tr><td><code>examples/hand_test.py</code></td><td>Minimal script printing pinch/grab scores and finger-extension state per frame</td></tr>
+        <tr><td><code>docs/</code></td><td>Curated resource list and what the LeapC API actually exposes, verified on hardware</td></tr>
+      </tbody>
+    </table>
+<pre><code>git clone https://github.com/ohora23/leap-motion-linux-revival.git
+cd leap-motion-linux-revival
+./install.sh</code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span>The udev bug</h2>
+    <p>Ultraleap's shipped rule puts the match and the assignment on separate lines with a blank line between them.
+        udev parses each non-empty line as its own rule, so the match does nothing and <code>GROUP="plugdev"</code>
+        applies to nothing. The tracking service, which runs as an unprivileged user, can never open the device.</p>
+<pre><code>SUBSYSTEM=="usb", ATTRS{idVendor}=="f182", ATTRS{idProduct}=="0003"
+
+GROUP="plugdev"
+
+# service log
+Failed to open LMC. Going to retry.
+Error: Could not open device.</code></pre>
+    <p>The fix is a corrected override in <code>/etc/udev/rules.d/</code>; the vendor file is left untouched.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span>Verified working</h2>
+    <div class="grid3">
+      <div class="card"><div class="stat">~114 FPS</div><p class="dim">tracking events over the Python bindings</p></div>
+      <div class="card"><div class="stat">2 hands</div><p class="dim">tracked live with pinch/grab scores and per-finger extension</p></div>
+      <div class="card"><div class="stat">0 root</div><p class="dim">needed for the visualizer; no Unity Control Panel required</p></div>
+    </div>
+    <p class="dim" style="margin-top:16px">Ubuntu 24.04, original Leap Motion Controller, service Gemini 5.17.1.0,
+    device firmware 1.7.0 (July 2026). Python bindings come from an unmodified preservation fork of
+    <code>ultraleap/leapc-python-bindings</code>, in case the upstream organization disappears.</p>
+  </section>
+
+</main>
+
+<footer>
+  MIT-licensed kit; Ultraleap's binaries are fetched at install time, not redistributed.
+  &middot; by <a href="https://github.com/ohora23">Jeong-Ki Yoo</a>
+  &middot; <a href="https://github.com/ohora23/leap-motion-linux-revival">Source on GitHub</a>
+</footer>
+
+</body>
+</html>
